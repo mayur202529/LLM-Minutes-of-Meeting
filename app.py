@@ -25,7 +25,7 @@ app.config['CELERY_RESULT_BACKEND'] = 'redis://127.0.0.1:6379/0'
 redis = Redis(host='localhost', port=6379, db=0)
 
 celery = Celery(app.name, broker=app.config['CELERY_BROKER_URL'])
-celery.conf.update(app.config)
+celery.config_from_object(app.config)
 
 
 if not os.path.exists(os.path.join(os.getcwd(),"temp")):
@@ -35,8 +35,9 @@ if not os.path.exists(os.path.join(os.getcwd(),"media_storage")):
     os.makedirs(os.path.join(os.getcwd(),"media_storage"))
 
 print("Loading Speech Model...")
-MODEL_TO_RUN = "tiny.en"
-MODEL_ARCHITECTURE = "faster_whisper"
+# MODEL_TO_RUN = "tiny.en"
+MODEL_TO_RUN = "openai/whisper-large-v3"
+MODEL_ARCHITECTURE = "openai_whisper"
 
 if MODEL_ARCHITECTURE == "faster_whisper":
     speech_pipeline = Faster_Whisper(MODEL_TO_RUN)
@@ -64,7 +65,7 @@ def process_file(file_path):
     meeting_transcription = ""
     for chunk in crop_into_segments(output_wav_path):
         ## Convert each chunk into speech transcrripts
-        meeting_transcription += f" {speech_pipeline(chunk)}"
+        meeting_transcription += f" {(speech_pipeline.transcribe(chunk))}"
         ## and then generate a complete conversation
         print(f"processing chunk {chunk} in generator fashion")
     time.sleep(5)
@@ -163,12 +164,15 @@ def index():
         audio_file = request.files.get('file')
         model_type = request.form.get('model_type')
         
-        unique_filename = str(uuid.uuid4()) + '_' + audio_file.filename
+        unique_filename = str(uuid.uuid4()) + '_' + audio_file.filename.replace(" ", "")
         file_path = os.path.join(os.getcwd(),"media_storage",unique_filename)
         audio_file.save(file_path)
 
-        task = process_file.apply_async((file_path, model_type), time_limit=120)
-        
+        #task = process_file.apply_async((file_path, model_type), time_limit=120)
+        # task = process_file.apply_async((file_path, model_type))
+        print("filepath", file_path)
+        task = process_file(str(file_path))
+        #task = process_file.apply_async(args=(file_path), time_limit=120)
         return redirect(url_for('show_result', task_id=task.id))
     return render_template('index.html')
 

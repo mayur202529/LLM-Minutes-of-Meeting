@@ -75,7 +75,8 @@ class Faster_Whisper:
                 model_name,
                 device=device
             )
-            return self.pipeline
+            # return None
+            # return self.pipeline
         else:
             raise f"No such Faste Whisper Model exists. Please choose from the following list: {self.faster_whisper_models}"
     

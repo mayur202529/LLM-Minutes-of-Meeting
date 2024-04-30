@@ -8,7 +8,7 @@ from mimetypes import guess_type
 def crop_into_segments(
     source_audio_base_path,
     target_path_to_store = os.path.join(os.getcwd(),"temp","temp_cropped_audio"),
-    crop_window_duration=(20,40)
+    crop_window_duration=(60,120)
 ):
     """
     Crops a source audio file into segments based on non-muted sections and yields the path of each cropped audio segment.
